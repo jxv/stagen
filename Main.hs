@@ -5,6 +5,7 @@ import Text.Blaze.Html.Renderer.Text (renderHtml)
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
 import Data.Default
+import Data.Monoid
 import System.Environment
 
 main :: IO ()
@@ -18,4 +19,7 @@ run inputFile outputFile = do
     TL.writeFile outputFile (translate fileContent)
 
 translate :: TL.Text -> TL.Text
-translate = renderHtml . markdown def
+translate content = begin <> (renderHtml . markdown def $ content) <> end
+ where
+    begin = "<!doctype html><html><body>"
+    end = "</body></html>"    
