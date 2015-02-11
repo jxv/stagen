@@ -1,6 +1,9 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 import Prelude hiding (head)
 import Control.Applicative
+import Options.Applicative
+import System.FilePath.Find
+import System.FilePath.Glob
+import System.FilePath.Manip
 import Text.Markdown
 import Text.Blaze.Html (Html)
 import Text.Blaze.Html.Renderer.Text (renderHtml)
@@ -42,12 +45,12 @@ translate content = construct (Template [] [] Nothing Nothing) (Page Nothing (re
 construct :: Template -> Page -> TL.Text
 construct Template{..} Page{..} = (html . TL.concat)
     [ (head . TL.concat) (try pageTitle : map styleSheet tplStyleSheets ++ map script tplScripts)
-    , (body . wrapper . TL.concat) [header (try tplHeader), content pageContent, footer (try tplFooter)]
+    , (body . wrapper . TL.concat) [divHeader (try tplHeader), divContent pageContent, divFooter (try tplFooter)]
     ]
  where
     try = fromMaybe TL.empty
 
-html, head, title, styleSheet, script, body, wrapper, header, footer :: TL.Text -> TL.Text
+html, head, title, styleSheet, script, body, wrapper, divHeader, divContent, divFooter :: TL.Text -> TL.Text
 html x = "<!doctype html><html>" <> x <> "</html>"
 head x = "<head>" <> x <> "</head>"
 title x = "<title>" <> x <> "</title>"
@@ -55,6 +58,6 @@ styleSheet x = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" <> x <> "\">
 script x = "<script src=\"" <> x <> "\"></script>"
 body x = "<body>" <> x <> "</body>"
 wrapper x = "<div id=\"wrapper\">" <> x <> "</div>"
-header x = "<div id=\"header\">" <> x <> "</div>"
-content x = "<div id=\"content\">" <> x <> "</div>"
-footer x = "<div id=\"footer\">" <> x <> "</div>"
+divHeader x = "<div id=\"header\">" <> x <> "</div>"
+divContent x = "<div id=\"content\">" <> x <> "</div>"
+divFooter x = "<div id=\"footer\">" <> x <> "</div>"
