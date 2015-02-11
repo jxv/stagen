@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards #-}
+import Prelude hiding (head)
 import Control.Applicative
 import Text.Markdown
 import Text.Blaze.Html (Html)
@@ -8,6 +9,7 @@ import qualified Data.Text.Lazy.IO as TL
 import Data.Default
 import Data.Monoid
 import System.Environment
+import Data.Maybe
 
 main :: IO ()
 main = do
@@ -19,33 +21,40 @@ data Page = Page
     , pageContent :: TL.Text
     } deriving (Show, Eq)
 
-data Generator a = Generator
-    { genWrapper :: TL.Text -> TL.Text
-    , genStyleSheets :: [TL.Text]
-    , genScripts :: [TL.Text]
-    , genHeader :: TL.Text
-    , genFooter :: TL.Text
-    , genValue :: a
-    }
-
-instance Functor Generator where
-    fmap f gen@Generator{..} = gen { genValue = f genValue }
-
-instance Applicative Generator where
-    pure a = Generator id [] [] TL.empty TL.empty a
-    genFunc <*> gen = gen { genValue = (genValue genFunc) (genValue gen) }
-
-instance Monad Generator where
-    Generator{..} >>= f = f genValue
-    return = pure
+data Template = Template
+    { tplStyleSheets :: [TL.Text]
+    , tplScripts :: [TL.Text]
+    , tplHeader :: Maybe TL.Text
+    , tplFooter :: Maybe TL.Text
+    } deriving (Show, Eq)
 
 run :: FilePath -> FilePath -> IO ()
-run inputFile outputFile = do
-    fileContent <- TL.readFile inputFile
-    TL.writeFile outputFile (translate fileContent)
+run inputFilePath outputFilePath = do
+    fileContent <- TL.readFile inputFilePath
+    TL.writeFile outputFilePath (translate fileContent)
+
+render :: TL.Text -> TL.Text
+render = renderHtml . markdown def
 
 translate :: TL.Text -> TL.Text
-translate content = begin <> (renderHtml . markdown def $ content) <> end
+translate content = construct (Template [] [] Nothing Nothing) (Page Nothing (render content))
+
+construct :: Template -> Page -> TL.Text
+construct Template{..} Page{..} = (html . TL.concat)
+    [ (head . TL.concat) (try pageTitle : map styleSheet tplStyleSheets ++ map script tplScripts)
+    , (body . wrapper . TL.concat) [header (try tplHeader), content pageContent, footer (try tplFooter)]
+    ]
  where
-    begin = "<!doctype html><html><head><title></title></head><body><div id=\"wrapper\"><div id=\"header\"></div><div id=\"content\">"
-    end = "</div><div id=\"footer\"></div></div></body></html>"    
+    try = fromMaybe TL.empty
+
+html, head, title, styleSheet, script, body, wrapper, header, footer :: TL.Text -> TL.Text
+html x = "<!doctype html><html>" <> x <> "</html>"
+head x = "<head>" <> x <> "</head>"
+title x = "<title>" <> x <> "</title>"
+styleSheet x = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" <> x <> "\">"
+script x = "<script src=\"" <> x <> "\"></script>"
+body x = "<body>" <> x <> "</body>"
+wrapper x = "<div id=\"wrapper\">" <> x <> "</div>"
+header x = "<div id=\"header\">" <> x <> "</div>"
+content x = "<div id=\"content\">" <> x <> "</div>"
+footer x = "<div id=\"footer\">" <> x <> "</div>"
