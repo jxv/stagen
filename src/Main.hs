@@ -46,9 +46,9 @@ cfgP = Config
     <$> switch (long "header" <> help "Include header.md")
     <*> switch (long "footer" <> help "Include footer.md")
     <*> switch (long "archive" <> help "Generate archive.html page")
-    <*> pure []
-    <*> pure []
-    <*> pure "."
+    <*> pure (cfgStyleSheets def)
+    <*> pure (cfgScripts def)
+    <*> pure (cfgTargetDirectory def)
 
 mkTemplate :: Config -> IO Template
 mkTemplate Config{..} = do
@@ -96,3 +96,6 @@ wrapper x = "<div id=\"wrapper\">" <> x <> "</div>"
 divHeader x = "<div id=\"header\">" <> x <> "</div>"
 divContent x = "<div id=\"content\">" <> x <> "</div>"
 divFooter x = "<div id=\"footer\">" <> x <> "</div>"
+
+instance Default Config where
+    def = Config False False False [] [] "."
