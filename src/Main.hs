@@ -43,17 +43,17 @@ main = do
     
 cfgP :: Parser Config
 cfgP = Config
-    <$> switch (long "header" <> help "Include header.md")
-    <*> switch (long "footer" <> help "Include footer.md")
-    <*> switch (long "archive" <> help "Generate archive.html page")
-    <*> pure (cfgStyleSheets def)
-    <*> pure (cfgScripts def)
-    <*> pure (cfgTargetDirectory def)
+    <$> switch (short 'e' <> long "header" <> help "Include header.md")
+    <*> switch (short 'f' <> long "footer" <> help "Include footer.md")
+    <*> switch (short 'a' <> long "archive" <> help "Generate archive.html page")
+    <*> many (strOption (short 'c' <> long "stylesheet" <> help "Stylesheet file path"))
+    <*> many (strOption (short 'j' <> long "script" <> help "Script file path"))
+    <*> (strArgument (metavar "TARGET-DIRECTORY") <|> pure (cfgTargetDirectory def))
 
 mkTemplate :: Config -> IO Template
 mkTemplate Config{..} = do
-    let tplStyleSheets = []
-    let tplScripts = []
+    let tplStyleSheets = map TL.pack cfgStyleSheets
+    let tplScripts = map TL.pack cfgScripts
     tplHeader <- go cfgHeader (render <$> TL.readFile "header.md")
     tplFooter <- go cfgFooter (render <$> TL.readFile "footer.md")
     return Template{..}
