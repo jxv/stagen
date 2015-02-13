@@ -67,16 +67,8 @@ mkPage filePath = do
     pageContent <- render <$> TL.readFile filePath
     return Page{..}
 
-run :: FilePath -> FilePath -> IO ()
-run inputFilePath outputFilePath = do
-    fileContent <- TL.readFile inputFilePath
-    TL.writeFile outputFilePath (translate fileContent)
-
 render :: TL.Text -> TL.Text
 render = renderHtml . markdown def
-
-translate :: TL.Text -> TL.Text
-translate content = construct (Template [] [] Nothing Nothing) (Page Nothing (render content))
 
 construct :: Template -> Page -> TL.Text
 construct Template{..} Page{..} = (html . TL.concat)
