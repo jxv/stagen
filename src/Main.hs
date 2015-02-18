@@ -1,7 +1,10 @@
+module Main where
+
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
 import qualified Data.List as L
 import Options.Applicative
+import Options.Applicative.Builder.Internal (HasName)
 import System.FilePath.Find
 import System.FilePath.Glob
 import System.FilePath.Manip
@@ -10,56 +13,61 @@ import Text.Blaze.Html (Html)
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Data.Default
 import Data.Monoid
-import System.Environment
 import Data.Maybe
 
-data Config = Config {
-    cfgHeader :: Bool,
-    cfgFooter :: Bool,
-    cfgArchive :: Bool,
-    cfgStyleSheets :: [FilePath],
-    cfgScripts :: [FilePath],
-    cfgTargetDirectory :: FilePath
-} deriving Show
-
-data Page = Page {
-    pageTitle :: Maybe TL.Text,
-    pageContent :: TL.Text
-} deriving Show
-
-data Template = Template {
-    tplStyleSheets :: [TL.Text],
-    tplScripts :: [TL.Text],
-    tplHeader :: Maybe TL.Text,
-    tplFooter :: Maybe TL.Text
-} deriving Show
+import Stagen.Opts (Opts(..), Command(..), optsP)
+import Stagen.Page
+import Stagen.Template
 
 main :: IO ()
 main = do
-    cfg <- execParser (info cfgP idm)
-    tpl <- mkTemplate cfg
-    page <- mkPage "index.md"
-    TL.writeFile "index.html" (construct tpl page)
-    
-cfgP :: Parser Config
-cfgP = Config
-    <$> switch (short 'e' <> long "header" <> help "Include header.md")
-    <*> switch (short 'f' <> long "footer" <> help "Include footer.md")
-    <*> switch (short 'a' <> long "archive" <> help "Generate archive.html page")
-    <*> many (strOption (short 'c' <> long "stylesheet" <> help "Stylesheet file path"))
-    <*> many (strOption (short 'j' <> long "script" <> help "Script file path"))
-    <*> (strArgument (metavar "TARGET-DIRECTORY") <|> pure (cfgTargetDirectory def))
+    opts@Opts{..} <- execParser (info optsP idm)
+    case optsCommand of
+        Init -> return ()
+        Build -> runBuild opts
+        Clean -> return ()
 
-mkTemplate :: Config -> IO Template
-mkTemplate Config{..} = do
-    let tplStyleSheets = map TL.pack cfgStyleSheets
-    let tplScripts = map TL.pack cfgScripts
-    tplHeader <- go cfgHeader (render <$> TL.readFile "header.md")
-    tplFooter <- go cfgFooter (render <$> TL.readFile "footer.md")
+runBuild :: Opts -> IO ()
+runBuild opts@Opts{..} = do
+    tpl <- mkTemplate opts
+    let ignore = catMaybes [optsHeader, optsFooter, optsArchive]
+    files <- find (pure True) (eligable ignore) (optsTargetDirectory)
+    mapM_ (writePageFromMarkdown tpl) files
+
+changeExtension :: FilePath -> String -> FilePath
+changeExtension path newExtension
+    | hasExt = basename ++ newExtension
+    | otherwise = path ++ ('.' : newExtension)
+ where
+    revPath = reverse path
+    hasExt = elem '.' (takeWhile (/= '/') revPath)
+    basename = reverse (dropWhile (/= '.') revPath)
+
+writePageFromMarkdown :: Template -> FilePath -> IO ()
+writePageFromMarkdown tpl mdPath = do
+    page <- mkPage mdPath
+    writePage tpl page (changeExtension mdPath "html")
+
+writePage :: Template -> Page -> FilePath -> IO ()
+writePage tpl page htmlPath = TL.writeFile htmlPath (construct tpl page)
+
+eligable :: [FilePath] -> FindClause Bool
+eligable ignore = do
+    isMarkdown <- (== ".md") <$> extension
+    name <- fileName
+    let isFileName = and (map (/= name) ignore)
+    return (isMarkdown && isFileName) 
+
+mkTemplate :: Opts -> IO Template
+mkTemplate Opts{..} = do
+    let tplStyleSheets = map TL.pack optsStyleSheets
+    let tplScripts = map TL.pack optsScripts
+    tplHeader <- go optsHeader
+    tplFooter <- go optsFooter
     return Template{..}
  where
-    go False _ = return Nothing
-    go True x = fmap Just x
+    go Nothing = return Nothing
+    go (Just path) = Just <$> render <$> TL.readFile path
 
 mkPage :: FilePath -> IO Page
 mkPage filePath = do
@@ -73,7 +81,10 @@ render = renderHtml . markdown def
 construct :: Template -> Page -> TL.Text
 construct Template{..} Page{..} = (html . TL.concat)
     [ (head' . TL.concat) (try pageTitle : map styleSheet tplStyleSheets ++ map script tplScripts)
-    , (body . wrapper . TL.concat) [divHeader (try tplHeader), divContent pageContent, divFooter (try tplFooter)] ]
+    , (body . wrapper . TL.concat)
+        [ divHeader (try tplHeader)
+        , divContent pageContent
+        , divFooter (try tplFooter) ] ]
  where
     try = fromMaybe TL.empty
 
@@ -88,6 +99,3 @@ wrapper x = "<div id=\"wrapper\">" <> x <> "</div>"
 divHeader x = "<div id=\"header\">" <> x <> "</div>"
 divContent x = "<div id=\"content\">" <> x <> "</div>"
 divFooter x = "<div id=\"footer\">" <> x <> "</div>"
-
-instance Default Config where
-    def = Config False False False [] [] "."
