@@ -37,7 +37,7 @@ cmdOptsP cmd = Opts cmd
     <*> tryStrArg 'f' "footer" "Include footer"
     <*> tryStrArg 'a' "archive" "Try to include archive, then generate page"
     <*> many (strArg 'c' "stylesheet" "Stylesheet file path")
-    <*> many (strArg 'j' "script" "Script file path")
+    <*> many (strArg 's' "script" "Script file path")
     <*> pure (optsCores def)
     <*> targetDirectory
 
