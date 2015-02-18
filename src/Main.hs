@@ -15,6 +15,7 @@ import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Data.Default
 import Data.Monoid
 import Data.Maybe
+import Control.Parallel.Strategies
 
 import Stagen.Opts
 import Stagen.Page
@@ -32,8 +33,11 @@ runBuild :: Opts -> IO ()
 runBuild opts@Opts{..} = do
     tpl <- mkTemplate opts
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter, optsArchive]
-    files <- find (pure True) (eligable ignore) (optsTargetDirectory)
-    mapM_ (writePageFromMarkdown optsVerbose tpl) files
+    files <- find (pure True) (eligable ignore) optsTargetDirectory
+    let procs = map (writePageFromMarkdown optsVerbose tpl) files
+    (sequence_ . runCore optsCores) procs
+ where
+    runCore n = runEval . evalBuffer n rseq
 
 changeExtension :: FilePath -> String -> FilePath
 changeExtension path newExtension

@@ -42,7 +42,7 @@ cmdOptsP cmd = Opts cmd
     <*> many (strArg 'c' "stylesheet" "Stylesheet file path")
     <*> many (strArg 's' "script" "Script file path")
     <*> many (strArg 'i' "ignore" "Don't render this file")
-    <*> pure (optsCores def)
+    <*> (option auto (arg 'j' "jobs" "Run ARG jobs simultaneously") <|> pure (optsCores def))
     <*> fmap (bool Slient Verbose) (switch (arg 'v' "verbose" "Explain what is being done"))
     <*> targetDirectory
 
