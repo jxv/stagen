@@ -3,6 +3,7 @@ module Main where
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
 import qualified Data.List as L
+import Control.Monad (when)
 import Options.Applicative
 import Options.Applicative.Builder.Internal (HasName)
 import System.FilePath.Find
@@ -15,7 +16,7 @@ import Data.Default
 import Data.Monoid
 import Data.Maybe
 
-import Stagen.Opts (Opts(..), Command(..), optsP)
+import Stagen.Opts
 import Stagen.Page
 import Stagen.Template
 
@@ -32,7 +33,7 @@ runBuild opts@Opts{..} = do
     tpl <- mkTemplate opts
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter, optsArchive]
     files <- find (pure True) (eligable ignore) (optsTargetDirectory)
-    mapM_ (writePageFromMarkdown tpl) files
+    mapM_ (writePageFromMarkdown optsVerbose tpl) files
 
 changeExtension :: FilePath -> String -> FilePath
 changeExtension path newExtension
@@ -43,10 +44,12 @@ changeExtension path newExtension
     hasExt = elem '.' (takeWhile (/= '/') revPath)
     basename = reverse (dropWhile (/= '.') revPath)
 
-writePageFromMarkdown :: Template -> FilePath -> IO ()
-writePageFromMarkdown tpl mdPath = do
-    page <- mkPage mdPath
-    writePage tpl page (changeExtension mdPath "html")
+writePageFromMarkdown :: Verbose -> Template -> FilePath -> IO ()
+writePageFromMarkdown verbose tpl mdPath = do
+    page <- readPage mdPath
+    let htmlPath = changeExtension mdPath "html"
+    when (verbose == Verbose) (putStrLn htmlPath)
+    writePage tpl page htmlPath
 
 writePage :: Template -> Page -> FilePath -> IO ()
 writePage tpl page htmlPath = TL.writeFile htmlPath (construct tpl page)
@@ -69,8 +72,8 @@ mkTemplate Opts{..} = do
     go Nothing = return Nothing
     go (Just path) = Just <$> render <$> TL.readFile path
 
-mkPage :: FilePath -> IO Page
-mkPage filePath = do
+readPage :: FilePath -> IO Page
+readPage filePath = do
     let pageTitle = Nothing
     pageContent <- render <$> TL.readFile filePath
     return Page{..}
