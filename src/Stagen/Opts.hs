@@ -21,6 +21,7 @@ data Opts = Opts {
     optsArchive :: Maybe FilePath,
     optsStyleSheets :: [FilePath],
     optsScripts :: [FilePath],
+    optsIgnore :: [FilePath],
     optsCores :: Int,
     optsTargetDirectory :: TargetDirectory
 } deriving Show
@@ -35,9 +36,10 @@ cmdOptsP :: Command -> Parser Opts
 cmdOptsP cmd = Opts cmd
     <$> tryStrArg 'e' "header" "Include header"
     <*> tryStrArg 'f' "footer" "Include footer"
-    <*> tryStrArg 'a' "archive" "Try to include archive, then generate page"
+    <*> tryStrArg 'a' "archive" "Prepend archive to generated page"
     <*> many (strArg 'c' "stylesheet" "Stylesheet file path")
     <*> many (strArg 's' "script" "Script file path")
+    <*> many (strArg 'i' "ignore" "Don't render this file")
     <*> pure (optsCores def)
     <*> targetDirectory
 
@@ -54,4 +56,4 @@ targetDirectory :: Parser TargetDirectory
 targetDirectory = strArgument (metavar "TARGET_DIRECTORY") <|> pure (optsTargetDirectory def)
 
 instance Default Opts where
-    def = Opts Build Nothing Nothing Nothing [] [] 1 "."
+    def = Opts Build Nothing Nothing Nothing [] [] [] 1 "."

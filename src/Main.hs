@@ -30,7 +30,7 @@ main = do
 runBuild :: Opts -> IO ()
 runBuild opts@Opts{..} = do
     tpl <- mkTemplate opts
-    let ignore = catMaybes [optsHeader, optsFooter, optsArchive]
+    let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter, optsArchive]
     files <- find (pure True) (eligable ignore) (optsTargetDirectory)
     mapM_ (writePageFromMarkdown tpl) files
 
