@@ -12,10 +12,7 @@ type TargetDirectory = FilePath
 data Verbose = Verbose | Slient
     deriving (Show, Eq)
 
-data Command
-    = Init
-    | Build
-    | Clean
+data Command = Init | Build | Clean
     deriving (Show, Eq)
 
 data Opts = Opts {
@@ -56,7 +53,7 @@ strArg :: Char -> String -> String -> Parser String
 strArg c l i = strOption (arg c l i)
 
 tryStrArg :: Char -> String -> String -> Parser (Maybe String)
-tryStrArg c l i =  fmap Just (strArg c l i) <|> pure Nothing
+tryStrArg c l i = fmap Just (strArg c l i) <|> pure Nothing
 
 targetDirectory :: Parser TargetDirectory
 targetDirectory = strArgument (metavar "TARGET_DIRECTORY") <|> pure (optsTargetDirectory def)
