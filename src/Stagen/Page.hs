@@ -5,9 +5,9 @@ import Data.Default
 import Data.Maybe
 
 data Page = Page {
-    pageTitle :: Maybe TL.Text,
+    pageTitle :: TL.Text,
     pageContent :: TL.Text
 } deriving Show
 
 instance Default Page where
-    def = Page Nothing TL.empty
+    def = Page TL.empty TL.empty

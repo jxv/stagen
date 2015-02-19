@@ -3,7 +3,10 @@ module Main where
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
 import qualified Data.List as L
-import Control.Monad (when)
+import qualified Text.Parsec as P
+import qualified Text.Parsec.String as P
+import Control.Arrow
+import Control.Monad (when, void)
 import Options.Applicative
 import Options.Applicative.Builder.Internal (HasName)
 import System.FilePath.Find
@@ -20,6 +23,13 @@ import Control.Parallel.Strategies
 import Stagen.Opts
 import Stagen.Page
 import Stagen.Template
+import Stagen.Construct
+
+data Date = Date {
+    dateYear :: Int,
+    dateMonth :: Int,
+    dateDay :: Int
+} deriving (Show, Eq, Ord)
 
 main :: IO ()
 main = do
@@ -34,10 +44,14 @@ runBuild opts@Opts{..} = do
     tpl <- mkTemplate opts
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter, optsArchive]
     files <- find (pure True) (eligable ignore) optsTargetDirectory
-    let jobs = map (writePageFromMarkdown optsVerbose tpl) files
-    runJobs optsCores jobs
- where
-    runJobs n = sequence_ . runEval . evalBuffer n rseq
+    htmlPathAndPages <- sequence $ map (fromMarkdown optsVerbose) files
+    let archive = archiveJob optsVerbose tpl htmlPathAndPages optsArchive
+    let pageAndHtmlPaths = map (\(page, path) -> (path, page)) htmlPathAndPages
+    let jobs = archive : map (uncurry (writePage tpl)) pageAndHtmlPaths
+    void $ runJobs optsCores jobs
+
+runJobs :: Monad m => Int -> [m a] -> m [a]
+runJobs n = sequence . runEval . evalBuffer n rseq
 
 changeExtension :: FilePath -> String -> FilePath
 changeExtension path newExtension
@@ -48,15 +62,60 @@ changeExtension path newExtension
     hasExt = elem '.' (takeWhile (/= '/') revPath)
     basename = reverse (dropWhile (/= '.') revPath)
 
+archiveJob :: Verbose -> Template -> [(FilePath, Page)] -> Maybe FilePath -> IO ()
+archiveJob verbose tpl htmlPathAndPages mMdPath = fromMaybe (return ()) $ do
+    mdPath <- mMdPath
+    return $ do
+        (htmlPath, page) <- fromMarkdown verbose mdPath
+        writePage tpl (addArchiveEntries page htmlPathAndPages) htmlPath
+
 writePageFromMarkdown :: Verbose -> Template -> FilePath -> IO ()
 writePageFromMarkdown verbose tpl mdPath = do
-    page <- readPage mdPath
-    let htmlPath = changeExtension mdPath "html"
-    when (verbose == Verbose) (putStrLn htmlPath)
+    (htmlPath, page) <- fromMarkdown verbose mdPath
     writePage tpl page htmlPath
+
+fromMarkdown :: Verbose -> FilePath -> IO (FilePath, Page)
+fromMarkdown verbose mdPath = do
+    let htmlPath = changeExtension mdPath "html"
+    page <- readPage mdPath
+    when (verbose == Verbose) (putStrLn htmlPath)
+    return (htmlPath, page)
 
 writePage :: Template -> Page -> FilePath -> IO ()
 writePage tpl page htmlPath = TL.writeFile htmlPath (construct tpl page)
+
+addArchiveEntries :: Page -> [(FilePath, Page)] -> Page
+addArchiveEntries page htmlPathAndPages =
+    let pathAndTitles = map (second pageTitle) htmlPathAndPages
+        sorter = L.sortBy (\(_,_,a) (_,_,b)-> compare a b)
+        content = (pageContent page) <> (toLinks . sorter . getEntries) pathAndTitles
+    in Page{pageTitle = pageTitle page, pageContent = content}
+ where
+    getEntries :: [(FilePath, TL.Text)] -> [(FilePath, TL.Text, Date)]
+    getEntries = catMaybes . map (\(f,t) -> fmap (f,t,) (parseMay datePrefix (baseName f)))
+
+    toLinks :: [(FilePath, TL.Text, Date)] -> TL.Text
+    toLinks = ul . TL.concat . map toLink
+
+    toLink :: (FilePath, TL.Text, Date) -> TL.Text
+    toLink (path, title, date) = li (anchor (TL.pack path) title)
+
+datePrefix :: P.Parser Date
+datePrefix = do
+    year <- number
+    void $ P.char '-'
+    month <- number
+    void $ P.char '-'
+    day <- number
+    void $ P.char '-'
+    return (Date year month day)
+ where
+    number = fmap read (P.many1 P.digit)
+
+parseMay :: P.Parser a -> String -> Maybe a
+parseMay p src = case P.parse p "" src of
+    Left _ -> Nothing
+    Right x -> Just x
 
 eligable :: [FilePath] -> FindClause Bool
 eligable ignore = do
@@ -64,6 +123,13 @@ eligable ignore = do
     name <- fileName
     let isFileName = and (map (/= name) ignore)
     return (isMarkdown && isFileName) 
+
+baseName :: FilePath -> FilePath
+baseName path = basename
+ where
+    revPath = reverse path
+    revName = takeWhile (/= '/') revPath
+    basename = reverse (dropWhile (/= '.') revName)
 
 mkTemplate :: Opts -> IO Template
 mkTemplate Opts{..} = do
@@ -79,8 +145,7 @@ mkTemplate Opts{..} = do
 readPage :: FilePath -> IO Page
 readPage filePath = do
     content <- TL.readFile filePath
-    let firstLine = TL.filter (not . isMarkdownChar) (TL.takeWhile isNotNewLine content)
-    let pageTitle = if TL.empty == firstLine then Nothing else Just firstLine
+    let pageTitle = TL.filter (not . isMarkdownChar) (TL.takeWhile isNotNewLine content)
     let pageContent = render content
     return Page{..}
  where
@@ -89,25 +154,3 @@ readPage filePath = do
 
 render :: TL.Text -> TL.Text
 render = renderHtml . markdown def
-
-construct :: Template -> Page -> TL.Text
-construct Template{..} Page{..} = (html . TL.concat)
-    [ (head' . TL.concat) (try (fmap title pageTitle) : map styleSheet tplStyleSheets ++ map script tplScripts)
-    , (body . wrapper . TL.concat)
-        [ divHeader (try tplHeader)
-        , divContent pageContent
-        , divFooter (try tplFooter) ] ]
- where
-    try = fromMaybe TL.empty
-
-html, head', title, styleSheet, script, body, wrapper, divHeader, divContent, divFooter :: TL.Text -> TL.Text
-html x = "<!doctype html><html>" <> x <> "</html>"
-head' x = "<head>" <> x <> "</head>"
-title x = "<title>" <> x <> "</title>"
-styleSheet x = "<link rel=\"stylesheet\" type=\"text/css\" href=\"" <> x <> "\">"
-script x = "<script src=\"" <> x <> "\"></script>"
-body x = "<body>" <> x <> "</body>"
-wrapper x = "<div id=\"wrapper\">" <> x <> "</div>"
-divHeader x = "<div id=\"header\">" <> x <> "</div>"
-divContent x = "<div id=\"content\">" <> x <> "</div>"
-divFooter x = "<div id=\"footer\">" <> x <> "</div>"
