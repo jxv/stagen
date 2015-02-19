@@ -3,7 +3,7 @@ module Stagen.Opts where
 import qualified Data.Text.Lazy as TL
 import Data.Default
 import Data.Bool (bool)
-import Data.Foldable (asum)
+import Data.Monoid (mconcat)
 import Options.Applicative
 import Options.Applicative.Builder.Internal (HasName)
 
@@ -31,7 +31,7 @@ data Opts = Opts {
 optsP :: Parser Opts
 optsP =
     let choice a c = command a (info (cmdOptsP c) (progDesc a))
-        choices = foldr1 (<>) [choice "init" Init, choice "build" Build, choice "clean" Clean]
+        choices = mconcat [choice "init" Init, choice "build" Build, choice "clean" Clean]
     in subparser choices
 
 cmdOptsP :: Command -> Parser Opts
