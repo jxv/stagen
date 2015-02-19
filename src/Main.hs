@@ -79,11 +79,12 @@ mkTemplate Opts{..} = do
 readPage :: FilePath -> IO Page
 readPage filePath = do
     content <- TL.readFile filePath
-    let firstLine = TL.takeWhile isNotNewLine content
-    let pageTitle = if TL.empty == firstLine then Nothing else Just (render firstLine)
+    let firstLine = TL.filter (not . isMarkdownChar) (TL.takeWhile isNotNewLine content)
+    let pageTitle = if TL.empty == firstLine then Nothing else Just firstLine
     let pageContent = render content
     return Page{..}
  where
+    isMarkdownChar ch = ch == '_' || ch == '*' || ch == '#' || ch == '>'
     isNotNewLine ch = ch /= '\n' && ch /= '\r'
 
 render :: TL.Text -> TL.Text
@@ -91,7 +92,7 @@ render = renderHtml . markdown def
 
 construct :: Template -> Page -> TL.Text
 construct Template{..} Page{..} = (html . TL.concat)
-    [ (head' . TL.concat) (try pageTitle : map styleSheet tplStyleSheets ++ map script tplScripts)
+    [ (head' . TL.concat) (try (fmap title pageTitle) : map styleSheet tplStyleSheets ++ map script tplScripts)
     , (body . wrapper . TL.concat)
         [ divHeader (try tplHeader)
         , divContent pageContent
