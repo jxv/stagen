@@ -34,10 +34,10 @@ runBuild opts@Opts{..} = do
     tpl <- mkTemplate opts
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter, optsArchive]
     files <- find (pure True) (eligable ignore) optsTargetDirectory
-    let procs = map (writePageFromMarkdown optsVerbose tpl) files
-    (sequence_ . runCore optsCores) procs
+    let jobs = map (writePageFromMarkdown optsVerbose tpl) files
+    runJobs optsCores jobs
  where
-    runCore n = runEval . evalBuffer n rseq
+    runJobs n = sequence_ . runEval . evalBuffer n rseq
 
 changeExtension :: FilePath -> String -> FilePath
 changeExtension path newExtension
@@ -78,9 +78,13 @@ mkTemplate Opts{..} = do
 
 readPage :: FilePath -> IO Page
 readPage filePath = do
-    let pageTitle = Nothing
-    pageContent <- render <$> TL.readFile filePath
+    content <- TL.readFile filePath
+    let firstLine = TL.takeWhile isNotNewLine content
+    let pageTitle = if TL.empty == firstLine then Nothing else Just (render firstLine)
+    let pageContent = render content
     return Page{..}
+ where
+    isNotNewLine ch = ch /= '\n' && ch /= '\r'
 
 render :: TL.Text -> TL.Text
 render = renderHtml . markdown def
