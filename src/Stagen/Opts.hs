@@ -23,7 +23,7 @@ data Opts = Opts {
     optsStyleSheets :: [FilePath],
     optsScripts :: [FilePath],
     optsIgnore :: [FilePath],
-    optsCores :: Int,
+    optsJobs :: Int,
     optsVerbose :: Verbose,
     optsTargetDirectory :: TargetDirectory
 } deriving Show
@@ -45,7 +45,7 @@ cmdOptsP cmd = Opts cmd
     <*> many (strArg 'c' "stylesheet" "Stylesheet file path")
     <*> many (strArg 's' "script" "Script file path")
     <*> many (strArg 'i' "ignore" "Don't render this file")
-    <*> (option auto (arg 'j' "jobs" "Run ARG jobs simultaneously") <|> pure (optsCores def))
+    <*> (option auto (arg 'j' "jobs" "Run ARG jobs simultaneously") <|> pure (optsJobs def))
     <*> fmap (bool Slient Verbose) (switch (arg 'v' "verbose" "Explain what is being done"))
     <*> targetDirectory
 

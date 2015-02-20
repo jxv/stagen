@@ -34,7 +34,7 @@ runBuild opts@Opts{..} = do
     let archive = archiveJob optsVerbose tpl htmlPathAndPages optsArchive
     let pageAndHtmlPaths = map (\(page, path) -> (path, page)) htmlPathAndPages
     let jobs = archive : map (uncurry (writePage tpl)) pageAndHtmlPaths
-    void $ runJobs optsCores jobs
+    void $ runJobs optsJobs jobs
 
 build :: Template -> Page -> TL.Text
 build Template{..} Page{..} = (html . TL.concat)
