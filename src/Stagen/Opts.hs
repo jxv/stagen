@@ -28,6 +28,9 @@ data Opts = Opts {
     optsTargetDirectory :: TargetDirectory
 } deriving Show
 
+parseOpts :: IO Opts
+parseOpts = execParser (info optsP idm)
+
 optsP :: Parser Opts
 optsP =
     let choice a c = command a (info (cmdOptsP c) (progDesc a))
