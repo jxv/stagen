@@ -12,6 +12,8 @@ import Options.Applicative.Builder.Internal (HasName)
 import System.FilePath.Find
 import System.FilePath.Glob
 import System.FilePath.Manip
+import System.Directory (removeFile)
+import System.IO.Error
 import Text.Markdown
 import Text.Blaze.Html (Html)
 import Text.Blaze.Html.Renderer.Text (renderHtml)
@@ -34,10 +36,26 @@ data Date = Date {
 main :: IO ()
 main = do
     opts@Opts{..} <- execParser (info optsP idm)
-    case optsCommand of
-        Init -> return ()
-        Build -> runBuild opts
-        Clean -> return ()
+    runByCommand optsCommand opts
+
+runByCommand :: Command -> Opts -> IO ()
+runByCommand cmd = case cmd of
+    Init -> runInit
+    Build -> runBuild
+    Clean -> runClean
+
+runInit :: Opts -> IO ()
+runInit opts@Opts{..} = do
+    return ()
+
+runClean :: Opts -> IO ()
+runClean opts@Opts{..} = do
+    let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter]
+    files <- find (pure True) (eligable ignore) optsTargetDirectory
+    htmlPaths <- map fst <$> (sequence $ map (fromMarkdown optsVerbose) files)
+    mapM_ (\p -> catchIOError (removeFile p) (const done)) htmlPaths
+ where
+    done = return ()
 
 runBuild :: Opts -> IO ()
 runBuild opts@Opts{..} = do
