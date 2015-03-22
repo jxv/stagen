@@ -83,7 +83,7 @@ addArchiveEntries page htmlPathAndPages =
     toLink (path, title, date) =
         renderText
             (li_ (a_ [href_ (T.pack path)]
-            (toHtmlRaw $ displayDate date <> " &#8212; <i>" <> title <> "</i>")))
+            (toHtmlRaw $ displayDate date <> " &#8212; <span style=\"font-style:italic;\">" <> title <> "</span>")))
 
 displayDate :: Date -> TL.Text
 displayDate Date{..} = TL.concat 
