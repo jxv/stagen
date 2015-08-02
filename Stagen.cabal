@@ -1,17 +1,21 @@
-name:                stagen
+name:                Stagen
 version:             0.1.0.0
 synopsis:            Codeless static site generator
 -- description:         
-homepage:            https://github.com/jxv/stagen
+homepage:            https://github.com/Jxv/Stagen
 license:             BSD3
 license-file:        LICENSE
 author:              Joe Vargas
-maintainer:          jxv@hush.com
+maintainer:          https://github.com/Jxv/
 copyright:           (c) 2015
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.18
+
+source-repository head
+  type: git
+  location: https://github.com/Jxv/Stagen
 
 executable stagen
   main-is:             Main.hs
