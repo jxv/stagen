@@ -7,15 +7,8 @@ import qualified Data.List as L
 import qualified Text.Parsec as P
 import qualified Text.Parsec.String as P
 import Control.Arrow
-import Control.Monad (when, void)
-import Options.Applicative
-import Options.Applicative.Builder.Internal (HasName)
+import Control.Monad (void)
 import System.FilePath.Find
-import System.FilePath.Glob
-import System.FilePath.Manip
-import System.IO.Error (catchIOError)
-import Text.Blaze.Html (Html)
-import Data.Default
 import Data.Monoid
 import Data.Maybe
 import Lucid
@@ -86,7 +79,7 @@ addArchiveEntries page htmlPathAndPages =
             (toHtmlRaw $ displayDate date <> " &#8212; <span style=\"font-style:italic;\">" <> title <> "</span>")))
 
 displayDate :: Date -> TL.Text
-displayDate Date{..} = TL.concat 
+displayDate Date{..} = TL.concat
     [ TL.pack (show dateYear)
     , "-"
     , TL.pack (showTwoDigits dateMonth)

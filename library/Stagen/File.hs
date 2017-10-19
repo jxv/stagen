@@ -2,11 +2,8 @@ module Stagen.File where
 
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
-import Control.Applicative
 import Control.Monad (when)
 import System.FilePath.Find
-import System.FilePath.Glob
-import System.FilePath.Manip
 import Text.Markdown
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 
@@ -25,11 +22,11 @@ eligable ignore = do
     isMarkdown <- (== ".md") <$> extension
     name <- fileName
     let isFileName = and (map (/= name) ignore)
-    return (isMarkdown && isFileName) 
+    return (isMarkdown && isFileName)
 
 readPage :: FilePath -> IO Page
-readPage filePath = do
-    content <- TL.readFile filePath
+readPage path = do
+    content <- TL.readFile path
     let pageTitle = TL.filter (not . isMarkdownChar) (TL.takeWhile isNotNewLine content)
     let pageContent = render content
     return Page{..}

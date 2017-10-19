@@ -3,5 +3,5 @@ module Stagen.Init where
 import Stagen.Opts
 
 runInit :: Opts -> IO ()
-runInit opts@Opts{..} = do
+runInit Opts{..} = do
     return ()

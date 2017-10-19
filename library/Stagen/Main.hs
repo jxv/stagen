@@ -1,4 +1,4 @@
-module Main where
+module Stagen.Main where
 
 import Stagen.Opts
 import Stagen.Init

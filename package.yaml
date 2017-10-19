@@ -1,0 +1,44 @@
+name: stagen
+version: '0.0.0'
+category: Web
+synopsis: Static site generator
+description: Low dependency static site generator using markdown
+maintainer: Joe Vargas
+license: BSD3
+extra-source-files:
+- package.yaml
+- README.md
+ghc-options: -Wall
+default-extensions:
+- LambdaCase
+- OverloadedStrings
+- TupleSections
+- RecordWildCards
+library:
+  dependencies:
+  - aeson
+  - base >= 4.7 && < 5
+  - bytestring
+  - blaze-html
+  - data-default
+  - directory
+  - filemanip
+  - lucid
+  - markdown
+  - mtl
+  - optparse-applicative
+  - parallel
+  - parsec
+  - text
+  source-dirs: library
+executables:
+  stagen:
+    dependencies:
+    - base
+    - stagen
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: executable

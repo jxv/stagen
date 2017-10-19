@@ -3,7 +3,7 @@ module Stagen.Opts where
 import qualified Data.Text.Lazy as TL
 import Data.Default
 import Data.Bool (bool)
-import Data.Monoid (mconcat)
+import Data.Monoid (mconcat, (<>))
 import Options.Applicative
 import Options.Applicative.Builder.Internal (HasName)
 

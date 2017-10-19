@@ -10,7 +10,7 @@ import Stagen.Opts
 import Stagen.File
 
 runClean :: Opts -> IO ()
-runClean opts@Opts{..} = do
+runClean Opts{..} = do
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter]
     files <- find (pure True) (eligable ignore) optsTargetDirectory
     htmlPaths <- map fst <$> (sequence $ map (fromMarkdown optsVerbose) files)
