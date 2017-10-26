@@ -20,6 +20,7 @@ data Opts = Opts {
     optsHeader :: Maybe FilePath,
     optsFooter :: Maybe FilePath,
     optsArchive :: Maybe FilePath,
+    optsFavicon :: Maybe FilePath,
     optsStyleSheets :: [FilePath],
     optsScripts :: [FilePath],
     optsIgnore :: [FilePath],
@@ -42,6 +43,7 @@ cmdOptsP cmd = Opts cmd
     <$> tryStrArg 'e' "header" "Include header"
     <*> tryStrArg 'f' "footer" "Include footer"
     <*> tryStrArg 'a' "archive" "Prepend archive to generated page"
+    <*> tryStrArg 'v' "favicon" "favicon path"
     <*> many (strArg 'c' "stylesheet" "Stylesheet file path")
     <*> many (strArg 's' "script" "Script file path")
     <*> many (strArg 'i' "ignore" "Don't render this file")
@@ -62,4 +64,4 @@ targetDirectory :: Parser TargetDirectory
 targetDirectory = strArgument (metavar "TARGET_DIRECTORY") <|> pure (optsTargetDirectory def)
 
 instance Default Opts where
-    def = Opts Build Nothing Nothing Nothing [] [] [] 1 Slient "."
+    def = Opts Build Nothing Nothing Nothing Nothing [] [] [] 1 Slient "."

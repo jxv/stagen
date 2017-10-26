@@ -37,6 +37,7 @@ build Template{..} Page{..} = renderText $ doctypehtml_ $ do
         void $ title_ (toHtmlRaw pageTitle)
         mapM_ (\href -> link_ [rel_ "stylesheet", type_ "text/css", href_ href]) (map TL.toStrict tplStyleSheets)
         mapM_ (\src -> termWith "script" [src_ src] "") (map TL.toStrict tplScripts)
+        mapM_ (\href -> link_ [rel_ "icon", type_ "image/png", href_ href]) tplFavicon
     body_ . div_ [id_ "wrapper"] $ do
         div_ [id_ "header"] (try tplHeader)
         div_ [id_ "content"] (toHtmlRaw pageContent)
@@ -107,6 +108,7 @@ mkTemplate :: Opts -> IO Template
 mkTemplate Opts{..} = do
     let tplStyleSheets = map TL.pack optsStyleSheets
     let tplScripts = map TL.pack optsScripts
+    let tplFavicon = T.pack <$> optsFavicon
     tplHeader <- go optsHeader
     tplFooter <- go optsFooter
     return Template{..}

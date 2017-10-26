@@ -1,9 +1,9 @@
--- This file has been generated from package.yaml by hpack version 0.17.0.
+-- This file has been generated from package.yaml by hpack version 0.17.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           stagen
-version:        0.0.0
+version:        0.1.0
 synopsis:       Static site generator
 description:    Low dependency static site generator using markdown
 category:       Web
