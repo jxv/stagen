@@ -63,7 +63,7 @@ writePage tpl page htmlPath = TL.writeFile htmlPath (build tpl page)
 addArchiveEntries :: Page -> [(FilePath, Page)] -> Page
 addArchiveEntries page htmlPathAndPages =
     let pathAndTitles = map (second pageTitle) htmlPathAndPages
-        sorter = L.sortBy (\(_,_,a) (_,_,b)-> compare a b)
+        sorter = L.sortBy (\(_,_,a) (_,_,b)-> compare b a)
         content = (pageContent page) <> (toLinks . sorter . getEntries) pathAndTitles
     in Page{pageTitle = pageTitle page, pageContent = content}
  where
