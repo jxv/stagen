@@ -14,10 +14,12 @@ default-extensions:
 - OverloadedStrings
 - TupleSections
 - RecordWildCards
+- NamedFieldPuns
 library:
   dependencies:
   - aeson
   - base >= 4.7 && < 5
+  - base-compat
   - bytestring
   - blaze-html
   - data-default
@@ -30,6 +32,11 @@ library:
   - parallel
   - parsec
   - text
+  - text-conversions
+  - feed
+  - xml
+  - xml-conduit
+  - xml-types
   source-dirs: library
 executables:
   stagen:

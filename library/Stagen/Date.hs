@@ -21,3 +21,8 @@ datePrefix = do
     return (Date year month day)
  where
     number = fmap read (many1 digit)
+
+showTwoDigits :: (Show a, Num a, Ord a) => a -> String
+showTwoDigits n
+    | n < 10 = '0' : show n
+    | otherwise = show n

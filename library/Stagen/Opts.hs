@@ -1,6 +1,5 @@
 module Stagen.Opts where
 
-import qualified Data.Text.Lazy as TL
 import Data.Default
 import Data.Bool (bool)
 import Data.Monoid (mconcat, (<>))
@@ -26,6 +25,8 @@ data Opts = Opts {
     optsIgnore :: [FilePath],
     optsJobs :: Int,
     optsVerbose :: Verbose,
+    optsBaseUrl :: FilePath,
+    optsTitle :: String,
     optsTargetDirectory :: TargetDirectory
 } deriving Show
 
@@ -49,6 +50,8 @@ cmdOptsP cmd = Opts cmd
     <*> many (strArg 'i' "ignore" "Don't render this file")
     <*> (option auto (arg 'j' "jobs" "Run ARG jobs simultaneously") <|> pure (optsJobs def))
     <*> fmap (bool Slient Verbose) (switch (arg 'v' "verbose" "Explain what is being done"))
+    <*> strArg 'u' "url" "Base url for the generated pages"
+    <*> strArg 't' "title" "Title of the blog"
     <*> targetDirectory
 
 arg :: HasName f => Char -> String -> String -> Mod f a
@@ -64,4 +67,4 @@ targetDirectory :: Parser TargetDirectory
 targetDirectory = strArgument (metavar "TARGET_DIRECTORY") <|> pure (optsTargetDirectory def)
 
 instance Default Opts where
-    def = Opts Build Nothing Nothing Nothing Nothing [] [] [] 1 Slient "."
+    def = Opts Build Nothing Nothing Nothing Nothing [] [] [] 1 Slient "" "" "."

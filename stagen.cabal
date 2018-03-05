@@ -1,6 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.17.1.
+-- This file has been generated from package.yaml by hpack version 0.20.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: bc8716103c53129181f5c45330d231fdc2bbec795c5eeafede104282edf76be9
 
 name:           stagen
 version:        0.1.0
@@ -20,15 +22,17 @@ extra-source-files:
 library
   hs-source-dirs:
       library
-  default-extensions: LambdaCase OverloadedStrings TupleSections RecordWildCards
+  default-extensions: LambdaCase OverloadedStrings TupleSections RecordWildCards NamedFieldPuns
   ghc-options: -Wall
   build-depends:
       aeson
-    , base >= 4.7 && < 5
-    , bytestring
+    , base >=4.7 && <5
+    , base-compat
     , blaze-html
+    , bytestring
     , data-default
     , directory
+    , feed
     , filemanip
     , lucid
     , markdown
@@ -37,10 +41,15 @@ library
     , parallel
     , parsec
     , text
+    , text-conversions
+    , xml
+    , xml-conduit
+    , xml-types
   exposed-modules:
       Stagen.Build
       Stagen.Clean
       Stagen.Date
+      Stagen.Feed
       Stagen.File
       Stagen.Init
       Stagen.Job
@@ -48,15 +57,19 @@ library
       Stagen.Opts
       Stagen.Page
       Stagen.Template
+  other-modules:
+      Paths_stagen
   default-language: Haskell2010
 
 executable stagen
   main-is: Main.hs
   hs-source-dirs:
       executable
-  default-extensions: LambdaCase OverloadedStrings TupleSections RecordWildCards
+  default-extensions: LambdaCase OverloadedStrings TupleSections RecordWildCards NamedFieldPuns
   ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N
   build-depends:
       base
     , stagen
+  other-modules:
+      Paths_stagen
   default-language: Haskell2010

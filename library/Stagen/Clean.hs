@@ -13,7 +13,7 @@ runClean :: Opts -> IO ()
 runClean Opts{..} = do
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter]
     files <- find (pure True) (eligable ignore) optsTargetDirectory
-    htmlPaths <- map fst <$> (sequence $ map (fromMarkdown optsVerbose) files)
+    htmlPaths <- map fst <$> (sequence $ map (fromMarkdown optsVerbose optsBaseUrl) files)
     mapM_ (\p -> catchIOError (removeFile p) (const done)) htmlPaths
  where
     done = return ()

@@ -4,8 +4,6 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
 import qualified Data.List as L
-import qualified Text.Parsec as P
-import qualified Text.Parsec.String as P
 import Control.Arrow
 import Control.Monad (void)
 import System.FilePath.Find
@@ -18,6 +16,7 @@ import Stagen.Date
 import Stagen.Template
 import Stagen.Page
 import Stagen.Job
+import Stagen.Feed
 import Stagen.File
 
 runBuild :: Opts -> IO ()
@@ -25,10 +24,11 @@ runBuild opts@Opts{..} = do
     tpl <- mkTemplate opts
     let ignore = optsIgnore ++ catMaybes [optsHeader, optsFooter, optsArchive]
     files <- find (pure True) (eligable ignore) optsTargetDirectory
-    htmlPathAndPages <- sequence $ map (fromMarkdown optsVerbose) files
-    let archive = archiveJob optsVerbose tpl htmlPathAndPages optsArchive
+    htmlPathAndPages <- sequence $ map (fromMarkdown optsVerbose optsBaseUrl) files
+    let archive = archiveJob optsVerbose tpl optsBaseUrl htmlPathAndPages optsArchive
     let pageAndHtmlPaths = map (\(page, path) -> (path, page)) htmlPathAndPages
-    let jobs = archive : map (uncurry (writePage tpl)) pageAndHtmlPaths
+    let atomFeed = fromMaybe (return ()) $ fmap writeAtomXml $ createAtomFeed optsTitle optsBaseUrl (map snd htmlPathAndPages)
+    let jobs = archive : atomFeed : map (uncurry (writePage tpl)) pageAndHtmlPaths
     void $ runJobs optsJobs jobs
 
 build :: Template -> Page -> TL.Text
@@ -45,27 +45,30 @@ build Template{..} Page{..} = renderText $ doctypehtml_ $ do
  where
     try = toHtmlRaw . fromMaybe TL.empty
 
-archiveJob :: Verbose -> Template -> [(FilePath, Page)] -> Maybe FilePath -> IO ()
-archiveJob verbose tpl htmlPathAndPages mMdPath = fromMaybe (return ()) $ do
+archiveJob :: Verbose -> Template -> FilePath -> [(FilePath, Page)] -> Maybe FilePath -> IO ()
+archiveJob verbose tpl baseUrl htmlPathAndPages mMdPath = fromMaybe (return ()) $ do
     mdPath <- mMdPath
     return $ do
-        (htmlPath, page) <- fromMarkdown verbose mdPath
-        writePage tpl (addArchiveEntries page htmlPathAndPages) htmlPath
+        (htmlPath, page) <- fromMarkdown verbose baseUrl mdPath
+        writePage tpl (addArchiveEntries baseUrl mdPath page htmlPathAndPages) htmlPath
 
-writePageFromMarkdown :: Verbose -> Template -> FilePath -> IO ()
-writePageFromMarkdown verbose tpl mdPath = do
-    (htmlPath, page) <- fromMarkdown verbose mdPath
+writePageFromMarkdown :: Verbose -> Template -> FilePath -> FilePath -> IO ()
+writePageFromMarkdown verbose tpl baseUrl mdPath = do
+    (htmlPath, page) <- fromMarkdown verbose baseUrl mdPath
     writePage tpl page htmlPath
 
 writePage :: Template -> Page -> FilePath -> IO ()
 writePage tpl page htmlPath = TL.writeFile htmlPath (build tpl page)
 
-addArchiveEntries :: Page -> [(FilePath, Page)] -> Page
-addArchiveEntries page htmlPathAndPages =
+writeAtomXml :: TL.Text -> IO ()
+writeAtomXml = TL.writeFile "atom.xml"
+
+addArchiveEntries :: FilePath -> FilePath -> Page -> [(FilePath, Page)] -> Page
+addArchiveEntries baseUrl archivePath page htmlPathAndPages =
     let pathAndTitles = map (second pageTitle) htmlPathAndPages
         sorter = L.sortBy (\(_,_,a) (_,_,b)-> compare b a)
         content = (pageContent page) <> (toLinks . sorter . getEntries) pathAndTitles
-    in Page{pageTitle = pageTitle page, pageContent = content}
+    in Page{pageTitle = pageTitle page, pageContent = content, pageDate = Nothing, pageAbsoluteUrl = absoluteUrl baseUrl archivePath }
  where
     getEntries :: [(FilePath, TL.Text)] -> [(FilePath, TL.Text, Date)]
     getEntries = catMaybes . map (\(f,t) -> fmap (f,t,) (parseMay datePrefix (baseName f)))
@@ -87,22 +90,6 @@ displayDate Date{..} = TL.concat
     , "-"
     , TL.pack (showTwoDigits dateDay)
     ]
- where
-    showTwoDigits n
-        | n < 10 = '0' : show n
-        | otherwise = show n
-
-parseMay :: P.Parser a -> String -> Maybe a
-parseMay p src = case P.parse p "" src of
-    Left _ -> Nothing
-    Right x -> Just x
-
-baseName :: FilePath -> FilePath
-baseName path = basename
- where
-    revPath = reverse path
-    revName = takeWhile (/= '/') revPath
-    basename = reverse (dropWhile (/= '.') revName)
 
 mkTemplate :: Opts -> IO Template
 mkTemplate Opts{..} = do
