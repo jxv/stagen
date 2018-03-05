@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a4b528e2ab9d401abe563b99fbc7cf20742f2bd72bcc4098390d8478c925de36
+-- hash: badead40d64f903a9c62f6a773f8e419930b97d6e7c489d699eec49dcdf7f9e7
 
 name:           stagen
-version:        0.1.0
+version:        0.2.0
 synopsis:       Static site generator
 description:    Low dependency static site generator using markdown
 category:       Web

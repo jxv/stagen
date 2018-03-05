@@ -1,5 +1,5 @@
 name: stagen
-version: '0.1.0'
+version: '0.2.0'
 category: Web
 synopsis: Static site generator
 description: Low dependency static site generator using markdown
