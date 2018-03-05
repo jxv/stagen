@@ -6,13 +6,15 @@ import Data.Text (Text)
 import Data.Text.Conversions (fromText, toText)
 import Network.URI
 import JsonFeed
+import Data.Maybe
 
 import Stagen.Page
+import Stagen.Date
 
 createJsonFeed :: String -> String -> [Page] -> BL.ByteString
 createJsonFeed title baseUrl pages = let
   feed = mkFeed (toText title) (toText baseUrl)
-  feed' = feed { feedItems = map toItem pages }
+  feed' = feed { feedItems = catMaybes $ map toItem pages }
   in renderFeed feed'
 
 mkFeed :: Text -> Text -> Feed
@@ -34,20 +36,22 @@ mkFeed title baseUrl = Feed
   where
     baseUri = parseURI (fromText baseUrl)
 
-toItem :: Page -> Item
-toItem page = Item
-  { itemAttachments = Nothing
-  , itemAuthor = Nothing
-  , itemBannerImage = Nothing
-  , itemContentHtml = Nothing
-  , itemContentText = Nothing
-  , itemDateModified = Nothing
-  , itemDatePublished = Nothing
-  , itemExternalUrl = Nothing
-  , itemId = String (toText (pageAbsoluteUrl page))
-  , itemImage = Nothing
-  , itemSummary = Nothing
-  , itemTags = Nothing
-  , itemTitle = Just (toText (pageTitle page))
-  , itemUrl = fmap Url $ parseURI (fromText $ toText (pageAbsoluteUrl page))
-  }
+toItem :: Page -> Maybe Item
+toItem page = case pageDate page of
+  Nothing -> Nothing
+  Just date -> Just Item
+    { itemAttachments = Nothing
+    , itemAuthor = Nothing
+    , itemBannerImage = Nothing
+    , itemContentHtml = Nothing
+    , itemContentText = Nothing
+    , itemDateModified = Nothing
+    , itemDatePublished = Just $ dateToUTCTime date
+    , itemExternalUrl = Nothing
+    , itemId = String (toText (pageAbsoluteUrl page))
+    , itemImage = Nothing
+    , itemSummary = Nothing
+    , itemTags = Nothing
+    , itemTitle = Just (toText (pageTitle page))
+    , itemUrl = fmap Url $ parseURI (fromText $ toText (pageAbsoluteUrl page))
+    }

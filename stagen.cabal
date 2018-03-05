@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: badead40d64f903a9c62f6a773f8e419930b97d6e7c489d699eec49dcdf7f9e7
+-- hash: 02d6be748e505bc4264d2d3006b237c92612b2273a12733cc1c2089d71199062
 
 name:           stagen
-version:        0.2.0
+version:        0.2.1
 synopsis:       Static site generator
 description:    Low dependency static site generator using markdown
 category:       Web
@@ -44,6 +44,7 @@ library
     , parsec
     , text
     , text-conversions
+    , time
     , xml
     , xml-conduit
     , xml-types

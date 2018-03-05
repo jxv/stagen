@@ -1,6 +1,8 @@
 module Stagen.Date where
 
 import Data.Functor (void)
+import Data.Time.Clock
+import Data.Time.Calendar
 import Text.Parsec
 import Text.Parsec.String
 
@@ -26,3 +28,6 @@ showTwoDigits :: (Show a, Num a, Ord a) => a -> String
 showTwoDigits n
     | n < 10 = '0' : show n
     | otherwise = show n
+
+dateToUTCTime :: Date -> UTCTime
+dateToUTCTime Date{dateYear,dateMonth,dateDay} = UTCTime (fromGregorian (fromIntegral dateYear) dateMonth dateDay) 0
