@@ -3,6 +3,7 @@ module Stagen.Build where
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.List as L
 import Control.Arrow
 import Control.Monad (void)
@@ -18,6 +19,7 @@ import Stagen.Page
 import Stagen.Job
 import Stagen.AtomFeed (createAtomFeed)
 import Stagen.RssFeed (createRssFeed)
+import Stagen.JsonFeed (createJsonFeed)
 import Stagen.File
 
 runBuild :: Opts -> IO ()
@@ -28,9 +30,11 @@ runBuild opts@Opts{..} = do
     htmlPathAndPages <- sequence $ map (fromMarkdown optsVerbose optsBaseUrl) files
     let archive = archiveJob optsVerbose tpl optsBaseUrl htmlPathAndPages optsArchive
     let pageAndHtmlPaths = map (\(page, path) -> (path, page)) htmlPathAndPages
-    let atomFeed = fromMaybe (return ()) $ fmap writeAtomXml $ createAtomFeed optsTitle optsBaseUrl (reverse $ map snd htmlPathAndPages)
-    let rssFeed = fromMaybe (return ()) $ fmap writeRssXml $ createRssFeed optsTitle optsBaseUrl (reverse $ map snd htmlPathAndPages)
-    let jobs = archive : atomFeed : rssFeed : map (uncurry (writePage tpl)) pageAndHtmlPaths
+    let feedPages = reverse (map snd htmlPathAndPages)
+    let atomFeed = fromMaybe (return ()) $ fmap writeAtomXml $ createAtomFeed optsTitle optsBaseUrl feedPages
+    let rssFeed = fromMaybe (return ()) $ fmap writeRssXml $ createRssFeed optsTitle optsBaseUrl feedPages
+    let jsonFeed = writeFeedJson $ createJsonFeed optsTitle optsBaseUrl feedPages
+    let jobs = archive : atomFeed : rssFeed : jsonFeed : map (uncurry (writePage tpl)) pageAndHtmlPaths
     void $ runJobs optsJobs jobs
 
 build :: Template -> Page -> TL.Text
@@ -67,6 +71,9 @@ writeAtomXml = TL.writeFile "atom.xml"
 
 writeRssXml :: TL.Text -> IO ()
 writeRssXml = TL.writeFile "rss.xml"
+
+writeFeedJson :: BL.ByteString -> IO ()
+writeFeedJson = BL.writeFile "feed.json"
 
 addArchiveEntries :: FilePath -> FilePath -> Page -> [(FilePath, Page)] -> Page
 addArchiveEntries baseUrl archivePath page htmlPathAndPages =

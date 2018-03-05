@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b25a078a3bc598f12fa4c4dc8942a83bb0c990ecba4ae19ab3eafce0bbb62e64
+-- hash: a4b528e2ab9d401abe563b99fbc7cf20742f2bd72bcc4098390d8478c925de36
 
 name:           stagen
 version:        0.1.0
@@ -34,9 +34,11 @@ library
     , directory
     , feed
     , filemanip
+    , json-feed
     , lucid
     , markdown
     , mtl
+    , network-uri
     , optparse-applicative
     , parallel
     , parsec
@@ -53,6 +55,7 @@ library
       Stagen.File
       Stagen.Init
       Stagen.Job
+      Stagen.JsonFeed
       Stagen.Main
       Stagen.Opts
       Stagen.Page

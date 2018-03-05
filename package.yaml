@@ -31,9 +31,11 @@ library:
   - optparse-applicative
   - parallel
   - parsec
+  - json-feed
   - text
   - text-conversions
   - feed
+  - network-uri
   - xml
   - xml-conduit
   - xml-types
