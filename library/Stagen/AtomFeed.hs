@@ -1,9 +1,7 @@
-module Stagen.Feed where
+module Stagen.AtomFeed where
 
 import qualified Data.Text.Lazy as TL
 import qualified Text.Atom.Feed as Atom
--- import qualified Text.Feed.Types as Feed
--- import qualified Text.RSS.Syntax as RSS
 import qualified Text.Atom.Feed.Export as Export
 
 import Prelude ()

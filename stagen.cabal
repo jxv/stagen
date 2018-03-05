@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bc8716103c53129181f5c45330d231fdc2bbec795c5eeafede104282edf76be9
+-- hash: b867860793c4ca986da41101e849d6338cdfb8f0dc3be5a1c64702dac9656f07
 
 name:           stagen
 version:        0.1.0
@@ -46,10 +46,10 @@ library
     , xml-conduit
     , xml-types
   exposed-modules:
+      Stagen.AtomFeed
       Stagen.Build
       Stagen.Clean
       Stagen.Date
-      Stagen.Feed
       Stagen.File
       Stagen.Init
       Stagen.Job

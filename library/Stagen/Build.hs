@@ -16,7 +16,7 @@ import Stagen.Date
 import Stagen.Template
 import Stagen.Page
 import Stagen.Job
-import Stagen.Feed
+import Stagen.AtomFeed
 import Stagen.File
 
 runBuild :: Opts -> IO ()
