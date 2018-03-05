@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b867860793c4ca986da41101e849d6338cdfb8f0dc3be5a1c64702dac9656f07
+-- hash: b25a078a3bc598f12fa4c4dc8942a83bb0c990ecba4ae19ab3eafce0bbb62e64
 
 name:           stagen
 version:        0.1.0
@@ -56,6 +56,7 @@ library
       Stagen.Main
       Stagen.Opts
       Stagen.Page
+      Stagen.RssFeed
       Stagen.Template
   other-modules:
       Paths_stagen

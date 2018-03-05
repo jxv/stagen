@@ -16,7 +16,8 @@ import Stagen.Date
 import Stagen.Template
 import Stagen.Page
 import Stagen.Job
-import Stagen.AtomFeed
+import Stagen.AtomFeed (createAtomFeed)
+import Stagen.RssFeed (createRssFeed)
 import Stagen.File
 
 runBuild :: Opts -> IO ()
@@ -27,8 +28,9 @@ runBuild opts@Opts{..} = do
     htmlPathAndPages <- sequence $ map (fromMarkdown optsVerbose optsBaseUrl) files
     let archive = archiveJob optsVerbose tpl optsBaseUrl htmlPathAndPages optsArchive
     let pageAndHtmlPaths = map (\(page, path) -> (path, page)) htmlPathAndPages
-    let atomFeed = fromMaybe (return ()) $ fmap writeAtomXml $ createAtomFeed optsTitle optsBaseUrl (map snd htmlPathAndPages)
-    let jobs = archive : atomFeed : map (uncurry (writePage tpl)) pageAndHtmlPaths
+    let atomFeed = fromMaybe (return ()) $ fmap writeAtomXml $ createAtomFeed optsTitle optsBaseUrl (reverse $ map snd htmlPathAndPages)
+    let rssFeed = fromMaybe (return ()) $ fmap writeRssXml $ createRssFeed optsTitle optsBaseUrl (reverse $ map snd htmlPathAndPages)
+    let jobs = archive : atomFeed : rssFeed : map (uncurry (writePage tpl)) pageAndHtmlPaths
     void $ runJobs optsJobs jobs
 
 build :: Template -> Page -> TL.Text
@@ -62,6 +64,9 @@ writePage tpl page htmlPath = TL.writeFile htmlPath (build tpl page)
 
 writeAtomXml :: TL.Text -> IO ()
 writeAtomXml = TL.writeFile "atom.xml"
+
+writeRssXml :: TL.Text -> IO ()
+writeRssXml = TL.writeFile "rss.xml"
 
 addArchiveEntries :: FilePath -> FilePath -> Page -> [(FilePath, Page)] -> Page
 addArchiveEntries baseUrl archivePath page htmlPathAndPages =
