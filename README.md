@@ -9,6 +9,12 @@ Pages are parsed from markdown and may include CSS and JS scripts.
 If you're looking to create a no-frills blog using markdown and perhaps a few scripts,
 this is it.
 
+## Example
+
+Check out the [example](https://github.com/jxv/stagen/tree/master/example) blog.
+
+---
+
 ## Dates
 
 The date of a post is parsed from the file's name.
@@ -37,7 +43,15 @@ The archive is (often) the home page which lists dated posts in chronological or
 The feeds are automatically generated as atom - `atom.xml`, json feed - `feed.json` and rss - `rss.xml`.
 As expected, only dated posts are inside the feeds.
 
+---
+
 ## Installation
+
+### From stackage
+
+`stack install stagen`
+
+### From source
 
 [Download stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 
@@ -46,7 +60,7 @@ stack build
 stack install
 ```
 
-### Quick test if installed
+#### Quick test if installed
 
 Try
 
@@ -61,7 +75,3 @@ Missing: COMMAND
 
 Usage: stagen COMMAND
 ```
-
-## Example
-
-Check out the [example](https://github.com/jxv/stagen/tree/master/example) blog.
